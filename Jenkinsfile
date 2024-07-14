@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE_NAME = "python-app"
+        DOCKER_CONTAINER_NAME = "python-app-container"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -10,47 +15,40 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'your-build-command-here'
+                sh 'pip install -r requirements.txt'
             }
         }
         
         stage('Test') {
             steps {
-                sh 'your-test-command-here'
+                sh 'python -m pytest'
             }
         }
         
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("your-docker-image-name:${env.BUILD_NUMBER}")
+                    docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}")
                 }
             }
         }
         
-        stage('Push Docker Image') {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    docker.withRegistry('https://your-docker-registry-url', 'docker-credentials-id') {
-                        docker.image("your-docker-image-name:${env.BUILD_NUMBER}").push()
-                    }
+                    sh """
+                        docker stop ${DOCKER_CONTAINER_NAME} || true
+                        docker rm ${DOCKER_CONTAINER_NAME} || true
+                        docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:5000 ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
+                    """
                 }
             }
         }
-        
-        stage('Deploy to EC2') {
-            steps {
-                sshagent(credentials: ['your-ssh-credentials-id']) {
-                    sh '''
-                        ssh user@your-ec2-instance-ip "
-                            docker pull your-docker-registry-url/your-docker-image-name:${BUILD_NUMBER}
-                            docker stop your-container-name || true
-                            docker rm your-container-name || true
-                            docker run -d --name your-container-name -p 80:80 your-docker-registry-url/your-docker-image-name:${BUILD_NUMBER}
-                        "
-                    '''
-                }
-            }
+    }
+
+    post {
+        always {
+            cleanWs()
         }
     }
 }
