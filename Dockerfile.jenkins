@@ -1,21 +1,5 @@
-FROM jenkins/jenkins:2.387.3-lts-jdk11
+FROM jenkins/jenkins:lts-jdk11
 
 USER root
-
-# Install Docker CLI, Python, and other useful tools
-RUN apt-get update && \
-    apt-get install -y docker.io curl git wget python3 python3-pip net-tools && \
-    ln -s /usr/bin/python3 /usr/bin/python && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Add Jenkins user to the Docker group
-RUN usermod -aG docker jenkins
-
-# Update PATH to include pip3
-ENV PATH="/usr/local/bin:${PATH}"
-
-# Verify pip installation
-RUN python3 -m pip --version
-
+RUN apt-get update && apt-get install -y python3
 USER jenkins
