@@ -1,52 +1,35 @@
-pipeline {
-    agent any
+version: '3.8'
 
-    environment {
-        DOCKER_IMAGE_NAME = "python-app"
-        DOCKER_CONTAINER_NAME = "python-app-container"
-    }
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
+  python_app:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: python_app
+    ports:
+      - "5000:5000"
+    environment:
+      - NAME=World
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}", "-f Dockerfile.python .")
-                }
-            }
-        }
+volumes:
+  jenkins_home:
 
-        stage('Run Tests') {
-            steps {
-                script {
-                    docker.image("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}").inside {
-                        sh 'python -m pytest'
-                    }
-                }
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    sh """
-                        docker stop ${DOCKER_CONTAINER_NAME} || true
-                        docker rm ${DOCKER_CONTAINER_NAME} || true
-                        docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:5000 ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
-                    """
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            cleanWs()
-        }
-    }
-}
+networks:
+  default:
+    name: my_network
