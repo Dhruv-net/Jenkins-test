@@ -21,14 +21,14 @@ pipeline {
 
         stage('Check Python') {
             steps {
-                sh 'python --version'
-                sh 'pip --version'
+                sh 'python3 --version'
+                sh 'pip3 --version'
             }
         }
 
         stage('Check Dockerfile') {
             steps {
-                sh 'ls -l Dockerfile'
+                sh 'ls -l Dockerfile.python'
             }
         }
 
@@ -37,28 +37,27 @@ pipeline {
                 sh 'netstat -tuln | grep :5000 || echo "Port 5000 is free"'
             }
         }
-        
+
         stage('Build') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh 'pip3 install -r requirements.txt'
             }
         }
-        
+
         stage('Test') {
             steps {
-                sh 'python -m pytest'
+                sh 'python3 -m pytest'
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    def image = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}")
-                    sh "docker images | grep ${DOCKER_IMAGE_NAME}"
+                    docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}", "-f Dockerfile.python .")
                 }
             }
         }
-        
+
         stage('Run Docker Container') {
             steps {
                 script {
@@ -66,8 +65,6 @@ pipeline {
                         docker stop ${DOCKER_CONTAINER_NAME} || true
                         docker rm ${DOCKER_CONTAINER_NAME} || true
                         docker run -d --name ${DOCKER_CONTAINER_NAME} -p 5000:5000 ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
-                        sleep 10
-                        docker logs ${DOCKER_CONTAINER_NAME}
                     """
                 }
             }

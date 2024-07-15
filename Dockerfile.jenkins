@@ -2,9 +2,10 @@ FROM jenkins/jenkins:2.387.3-lts-jdk11
 
 USER root
 
-# Install Docker CLI and other useful tools
+# Install Docker CLI, Python, and other useful tools
 RUN apt-get update && \
-    apt-get install -y docker.io curl git wget && \
+    apt-get install -y docker.io curl git wget python3 python3-pip net-tools && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
