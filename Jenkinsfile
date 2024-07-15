@@ -19,10 +19,24 @@ pipeline {
             }
         }
 
+        stage('Setup Python Environment') {
+            steps {
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    python3 -m pip install --upgrade pip
+                    python3 -m pip --version
+                '''
+            }
+        }
+
         stage('Check Python') {
             steps {
-                sh 'python3 --version'
-                sh 'pip3 --version'
+                sh '''
+                    . venv/bin/activate
+                    python3 --version
+                    python3 -m pip --version
+                '''
             }
         }
 
@@ -40,13 +54,19 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'pip3 install -r requirements.txt'
+                sh '''
+                    . venv/bin/activate
+                    python3 -m pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                sh 'python3 -m pytest'
+                sh '''
+                    . venv/bin/activate
+                    python3 -m pytest
+                '''
             }
         }
 

@@ -12,4 +12,10 @@ RUN apt-get update && \
 # Add Jenkins user to the Docker group
 RUN usermod -aG docker jenkins
 
+# Update PATH to include pip3
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Verify pip installation
+RUN python3 -m pip --version
+
 USER jenkins
