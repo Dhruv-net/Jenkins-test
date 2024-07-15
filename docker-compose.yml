@@ -6,30 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile.jenkins
     container_name: jenkins
-    privileged: true
-    user: root
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
-
-  python_app:
-    build:
-      context: .
-      dockerfile: Dockerfile.python
-    container_name: python_app
-    ports:
-      - "5000:5000"
-    environment:
-      - NAME=World
 
 volumes:
   jenkins_home:
-
-networks:
-  default:
-    name: my_network
